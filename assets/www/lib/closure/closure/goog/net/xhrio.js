@@ -923,6 +923,7 @@ goog.net.XhrIo.prototype.getResponseText = function() {
  */
 goog.net.XhrIo.prototype.getResponseXml = function() {
   /** @preserveTry */
+  console.log('start xml convert')
   try {
     return this.xhr_ ? this.xhr_.responseXML : null;
   } catch (e) {

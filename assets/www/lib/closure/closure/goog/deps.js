@@ -955,18 +955,13 @@ goog.addDependency('../../third_party/closure/goog/silverlight/silverlight.js', 
 goog.addDependency('../../third_party/closure/goog/silverlight/supporteduseragent.js', ['goog.silverlight.supportedUserAgent'], []);
 
 goog.addDependency('../../../../js/bjuceklis.js', ['bjuceklis'], ['lime.Circle', 'lime.Director', 'lime.Label', 'lime.Layer', 'lime.Scene', 'lime.animation.FadeTo', 'lime.animation.MoveTo', 'lime.animation.ScaleTo', 'lime.animation.Spawn','lime.fill.Image']);
-goog.addDependency('../../../../js/catapult.js', ['doolitle.Catapult'], ['lime.Sprite', 'lime.SpriteSheet']);
-goog.addDependency('../../../../js/vavere.js', ['doolitle.Vavere'], ['lime.Sprite', 'lime.SpriteSheet']);
-goog.addDependency('../../../../js/rieksti.js', ['doolitle.Rieksti'], ['lime.Sprite', 'lime.SpriteSheet']);
-goog.addDependency('../../../../js/world.js', ['doolitle.World'], ['lime.Layer']);
-goog.addDependency('../../../../js/interface.js', ['doolitle.Interface'], ['lime.Sprite', 'lime.Circle']);
-goog.addDependency('../../../../js/info.js', ['doolitle.Info'], ['lime.Sprite']);
-goog.addDependency('../../../../js/victory.js', ['doolitle.Victory'], ['lime.Sprite']);
-goog.addDependency('../../../../js/sceneBegin.js', ['doolitle.sceneBegin'], ['lime.Scene']);
-goog.addDependency('../../../../js/sceneLevels.js', ['doolitle.sceneLevels'], ['lime.Scene']);
-goog.addDependency('../../../../js/sceneGame.js', ['doolitle.sceneGame'], ['lime.Scene']);
-goog.addDependency('../../../../js/levelButton.js', ['doolitle.levelButton'], ['lime.Sprite']);
-goog.addDependency('../../../../js/panel_rieksti.js', ['doolitle.panelRieksti'], ['lime.Sprite']);
-goog.addDependency('../../../../js/hint.js', ['doolitle.Hint'], ['lime.Sprite']);
 
-goog.addDependency('../../../../media/katapult.plist.soy.js', ['lime.ASSETS.katapult.plist'], ['soy']);
+goog.addDependency('../../../../js/scLoad.js', ['bjuceklis.scLoad'], ['lime.Scene']);
+goog.addDependency('../../../../js/scGame.js', ['bjuceklis.scGame'], ['lime.Scene']);
+goog.addDependency('../../../../js/scVictory.js', ['bjuceklis.scVictory'], ['lime.Scene']);
+
+goog.addDependency('../../../../js/spWord.js', ['bjuceklis.spWord'], ['lime.Layer']);
+
+goog.addDependency('../../../../js/spLogo.js', ['bjuceklis.spLogo'], ['lime.Sprite']);
+goog.addDependency('../../../../js/spBurts.js', ['bjuceklis.spBurts'], ['lime.Sprite']);
+goog.addDependency('../../../../js/spTimer.js', ['bjuceklis.spTimer'], ['lime.Sprite']);

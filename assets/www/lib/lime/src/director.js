@@ -310,6 +310,7 @@ lime.Director.prototype.replaceScene = function(scene, opt_transition,
             while (--i >= 0) {
                 goog.dom.removeNode(removelist[i]);
             }
+            this.dispatchEvent({type: "scene_loaded"});
         },false,this);
 
     if (goog.isDef(opt_duration)) {
