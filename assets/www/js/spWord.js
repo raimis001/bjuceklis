@@ -41,6 +41,7 @@ bjuceklis.spWord = function() {
 }
 goog.inherits(bjuceklis.spWord, lime.Layer);
 
+
 bjuceklis.spWord.prototype.endMove = function() {
   console.log("end move");
   var d = 1000;
@@ -94,16 +95,14 @@ bjuceklis.spWord.prototype.onLettersClick = function(e) {
 }
 
 bjuceklis.spWord.prototype.checkWord = function() {
+  var word = this.word.join("");
   
-  var temp = "";
-  for (var i = 0; i < bjuceklis.WORD.length; i++) {
-    temp = temp + this.word[i];
-  }
+  var hash = md5(word);
   
-  temp = md5(temp);
-  
-  if (bjuceklis.HASH == temp) {
+  //console.log(word + " "  + bjuceklis.HASH + "   " + hash)
+  if (bjuceklis.HASH == hash) {
     console.log("Wiktorija");
-    bjuceklis.gameVictory();
+    
+    bjuceklis.gameVictory(word);
   }
 }

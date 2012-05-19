@@ -43,11 +43,19 @@ bjuceklis.scVictory = function() {
     .setAlign("left")
   pop.appendChild(this.word);
 
+  this.note = new lime.Label()
+    .setAnchorPoint(0,0)
+    .setText("")
+    .setPosition(180,95)
+    .setSize(400,200)
+    .setFontSize(30)
+    //.setFontWeight("bold")
+    .setAlign("left")
+  pop.appendChild(this.note);
+
   var move  = new lime.animation.MoveTo(pos)
                     .setDuration(0.25)
                     .setEasing(lime.animation.Easing.LINEAR);
-
-
 
   this.appendChild(pop);
   pop.runAction(move);
@@ -60,24 +68,30 @@ bjuceklis.scVictory = function() {
 }
 goog.inherits(bjuceklis.scVictory, lime.Scene);
 
-bjuceklis.scVictory.prototype.setVictory = function(type) {
+bjuceklis.scVictory.prototype.setVictory = function(type, word) {
   //type of victory
   //0 - victory
   //1 - timeout
   //2 - wrong word
+  if (!word) word = '';
   
-  this.word.setText(bjuceklis.WORD);
+  this.word.setText(word);
   this.error.setText("");
+  this.note.setText("");
   
   switch (type) {
     case 0:
+      this.error.setFontColor("#78C03E");
+      this.error.setText("Tu atmin\u0113ji v\u0101rdu!");
       this.icon.setFill(new lime.fill.Image('media/sm_good.png'));
       break;
     case 1:
+      this.error.setFontColor("#FF0000");
       this.error.setText("Laiks izbeidz\u0101s");
       this.icon.setFill(new lime.fill.Image('media/sm_bad.png'));
       break;
     case 2:
+      this.error.setFontColor("#FF0000");
       this.error.setText("V\u0101rds nav atmin\u0113ts");
       this.icon.setFill(new lime.fill.Image('media/sm_bad.png'));
       break;
@@ -85,3 +99,9 @@ bjuceklis.scVictory.prototype.setVictory = function(type) {
   
 }
 
+bjuceklis.scVictory.prototype.setNote = function(note) {
+  this.note.setText(note);
+}
+bjuceklis.scVictory.prototype.setWord = function(word) {
+  this.word.setText(word);
+}

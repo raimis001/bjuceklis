@@ -73,5 +73,5 @@ bjuceklis.spTimer.prototype.stop = function() {
     goog.events.removeAll(this.clock);
     this.clock = null;
   }
-  
+  this.label.setText(formatTime(0));
 }
