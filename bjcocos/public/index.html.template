@@ -28,6 +28,23 @@
                 box-shadow:         0 3px 10px rgba(0, 0, 0, 0.75);
             }
         </style>
+        <script type="text/javascript" charset="utf-8" src="phonegap.js"></script>
+        <script type="text/javascript" charset="utf-8">
+
+          document.addEventListener("deviceready", onDeviceReady, false);
+
+          function onDeviceReady() {
+              // Register the event listener
+              //document.addEventListener("backbutton", onBackKeyDown, false);
+          }
+
+          // Handle the back button
+          //
+          function onBackKeyDown(e) {
+              navigator.notification.vibrate(2000);
+          }
+
+    </script>
     </head>
     <body>
         <div class="cocos2d-app">

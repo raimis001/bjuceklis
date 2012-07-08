@@ -14,7 +14,7 @@ var Layer    = nodes.Layer
   , Scene    = nodes.Scene
   , Label    = nodes.Label
   , Sprite   = nodes.Sprite
-  , Director = cocos.Director
+  , Director = cocos.Director.sharedDirector
 
 var TouchDispatcher = require('cocos2d/TouchDispatcher').TouchDispatcher
 
@@ -33,9 +33,9 @@ function interfaceLayer () {
 		WIDTH = main.main.WIDTH;
 		HEIGHT = main.main.HEIGHT;
 
-		var logo = new nodes.Sprite({ file:'/res/bjuceklis.png'});
+		var logo = new nodes.Sprite({file:'/res/bjuceklis.png'});
 			logo.anchorPoint = new geo.Point(0,0);
-		this.addChild({ child:logo, z: -99});
+		this.addChild({child:logo, z: -99});
 
 }
 layers.interfaceLayer = interfaceLayer
@@ -57,7 +57,7 @@ function gameLayer () {
 		var item = new nodes.MenuItemImage({
 				normalImage: '/res/bt_begin.png'
 			, selectedImage: '/res/bt_begin.png'
-      , callback: function () { events.trigger(this, 'begin_game') }.bind(this)			
+      , callback: function () {events.trigger(this, 'begin_game')}.bind(this)			
 		})
 		
 		var menu = new nodes.Menu({items: [item,]})
@@ -67,12 +67,12 @@ function gameLayer () {
 		item.anchorPoint	= new geo.Point(0,0)
     item.position			= new geo.Point(0,75)
 
-    this.addChild({ child: menu , z: 1 })
+    this.addChild({child: menu , z: 1})
 
     this.menu = menu;
 		
-		var move = new actions.MoveTo({ duration: 0.95, position: new geo.Point(160, 120) })
-			move = new actions.EaseBounceOut({ action: move.copy() })
+		var move = new actions.MoveTo({duration: 0.95, position: new geo.Point(160, 120)})
+			move = new actions.EaseBounceOut({action: move.copy()})
 			
 		this.runAction(move);
     //events.addListener(this, 'begin_game',    this.beginGame.bind(this))
@@ -99,8 +99,8 @@ function playLayer (data) {
 		this.words = new wordLayer(WORD);
 		this.addChild(this.words);
 		
-		var move = new actions.MoveTo({ duration: 0.95, position: new geo.Point(160, 120) })
-			move = new actions.EaseBounceOut({ action: move.copy() })
+		var move = new actions.MoveTo({duration: 0.95, position: new geo.Point(160, 120)})
+			move = new actions.EaseBounceOut({action: move.copy()})
 			
 		this.runAction(move);
 }
@@ -119,15 +119,17 @@ function letterLayer(letter, pos, i, callback) {
 	this.anchorPoint = new geo.Point(0,0)	
 	
 	this.idx = i;
+  this.idx1 = -1;
 	this.callback = callback;
 	this.letter = letter;
+  this.down = true;
 
 	var back = new nodes.Sprite({file:'/res/b_fons.png'});
 		back.anchorPoint = new geo.Point(0,0);
 		this.addChild(back);
 	
 	// Create label
-	this.label = new Label({ string:   letter
+	this.label = new Label({string:   letter
 												, fontName: 'Arial'
 												, fontSize: 70
 												, fontColor: '#000'
@@ -138,11 +140,6 @@ function letterLayer(letter, pos, i, callback) {
     this.addChild(this.label)
 		
 	this.position = new geo.Point(pos.x + 7, pos.y + 5);
-	if (Director.sharedDirector.isTouchScreen) {
-			//this.isTouchEnabled = true
-	} else {
-      //this.isMouseEnabled = true
-	}
 
 	this.rect = geo.rectMake(
 		back.position.x - back.contentSize.width  * back.anchorPoint.x,
@@ -154,17 +151,13 @@ function letterLayer(letter, pos, i, callback) {
 	
 }
 letterLayer.inherit(Layer, {
-    registerWithTouchDispatcher: function () {
-      var TouchDispatcher = cocos.TouchDispatcher.TouchDispatcher;
-        TouchDispatcher.sharedDispatcher.addTargetedDelegate(this, -128, true)
-    },
     // Mouse Events
     itemForMouseEvent: function (event) {
 				if (!this.letter) return null;
 				
 				var location;
-		    if (Director.sharedDirector.isTouchScreen) 
-					location = Director.sharedDirector.convertTouchToCanvas(event.touch);
+		    if (Director.isTouchScreen) 
+					location = Director.convertTouchToCanvas(event.touch);
 					else location	= event.locationInCanvas;
 				
 				var local	= this.convertToNodeSpace(location)
@@ -172,26 +165,15 @@ letterLayer.inherit(Layer, {
 				if (geo.rectContainsPoint(this.rect, local)) return this
 
         return null
-    },
-   mouseUp: function (event) {
-     var selectedItem = this.itemForMouseEvent(event)
-		 if (!selectedItem) return false;
-		 if (selectedItem.callback) selectedItem.callback(selectedItem)
-
-     return true
-    }
-
-  , touchesEnded: function (event) {
-     var selectedItem = this.itemForMouseEvent(event)
-		 if (!selectedItem) return false;
-		 if (selectedItem.callback) selectedItem.callback(selectedItem)
-		 
-     return true
     }
 	, setLetter: function(letter) {
-		this.letter = letter;
-		this.label.string = letter
+      this.letter = letter;
+      this.label.string = letter
 	}
+  , flyTo: function(location) {
+    var action = new actions.MoveTo({ duration: 0.2, position: ccp(location.x, location.y) });
+    this.runAction(action);
+  }
 
 })
 function wordLayer(word) {
@@ -199,30 +181,40 @@ function wordLayer(word) {
 	wordLayer.superclass.constructor.call(this)
 	this.anchorPoint = new geo.Point(0,0)	
 
-	var pos = ccp(0,0)
-	var wordArray = new Array();
+	var pos = ccp(0,0);
+  var sp;
+	this.letters = new Array();
+  this.pos1    = new Array();
+  this.pos2    = new Array();
+  
 	for (var i = 0; i < word.length; i++) {
-		var sp = new nodes.Sprite({file:'/res/b_back.png'});
+//First line    
+		sp = new nodes.Sprite({file:'/res/b_back.png'});
 			sp.anchorPoint = ccp(0,0);
 			sp.position = ccp(pos.x, pos.y + 50); 
 		this.addChild({child:sp, z: -10});
+    this.pos1[i] = this.getRect(sp);
+    this.pos1[i].letter = null;
+    console.log(this.pos1[i])
+    
+//Seccond line    
 		sp = new nodes.Sprite({file:'/res/b_back.png'});
 			sp.anchorPoint = ccp(0,0);
 			sp.position = ccp(pos.x, pos.y + 80 + 50); 
-		
 		this.addChild({child:sp, z: -10});
-		
-		var t = new letterLayer(word.charAt(i),new geo.Point(pos.x, 80 + 50),i, this.pressChoice.bind(this));
-		this.addChild({ child:t, z: 0});
+    this.pos2[i] = this.getRect(sp);
+    this.pos2[i].letter = sp;
 
-		wordArray[i] = '';
+//Letter
+		var t = new letterLayer(word.charAt(i),new geo.Point(pos.x, 80 + 50),i);
+		this.letters[i] = t;
+		this.addChild({child:t, z: 0});
 
-		pos.x += 60;
-    
-    
+//Next position
+		pos.x += 58;
 	}		
   // Create label
-  this.info = new Label({ string:   "INFO"
+  this.info = new Label({string:   "INFO"
                         , fontName: 'Arial'
                         , fontSize: 30
                         , fontColor: '#000'
@@ -233,15 +225,17 @@ function wordLayer(word) {
     this.addChild(this.info)
 
 
-  if (Director.sharedDirector.isTouchScreen) {
+  if (Director.isTouchScreen) {
       //this.isTouchEnabled = true
       
-      var canvas = Director.sharedDirector.canvas;
+      var canvas = Director.canvas;
       
         canvas.addEventListener('touchstart',  this.touchesBegan.bind(this), true)
         canvas.addEventListener('touchmove',   this.touchesMoved.bind(this), true)
         canvas.addEventListener('touchend',    this.touchesEnded.bind(this), true)
         canvas.addEventListener('touchcancel', this.touchesCancelled.bind(this), true)
+        Director.document.addEventListener("backbutton", this.touchesBack.bind(this), false);
+        
       
   } else {
       this.isMouseEnabled = true
@@ -249,45 +243,139 @@ function wordLayer(word) {
 	
 }
 wordLayer.inherit(Layer, {
-  registerWithTouchDispatcher11: function () {
+  _isdragging: false
+  
+  , registerWithTouchDispatcher11: function () {
     if (TouchDispatcher) this.info.string = "Touch dispatcher;"
-   //TouchDispatcher.sharedDispatcher.addTargetedDelegate(this, 128, false)
-   this.info.string = "Touch dispatcher SET"
+    TouchDispatcher.sharedDispatcher.addTargetedDelegate(this, 128, false)
+    this.info.string = "Touch dispatcher SET"
   }
-	, pressChoice: function(idx) {
-		console.log("pressed:", idx);
-		idx.setLetter('')
-	}
-  , mouseUp: function (event) {
-    this.info.string = "Mouse press"
+  , getRect: function(sprite) {
+    var rect = geo.rectMake(
+      sprite.position.x - sprite.contentSize.width  * sprite.anchorPoint.x,
+      sprite.position.y - sprite.contentSize.height * sprite.anchorPoint.y,
+      sprite.contentSize.width,
+      sprite.contentSize.height
+    );
+    rect.origin = ccp(this.position.x + sprite.position.x + 7,this.position.y + sprite.position.y + 5);
+    return rect;
+  }
+  , getSelected: function(location) {
+      for (var i = 0; i < this.letters.length; i++) {
+        var local	= this.letters[i].convertToNodeSpace(location)
+        var rect = this.letters[i].rect;
+				if (geo.rectContainsPoint(rect, local)) return this.letters[i]
+      }
+      return null;
+  }
+  , startDrag: function() {
+      this._isdragging = true;
+      this.tm = null;
+      this.info.string = "Starting dragg..."
+      console.log("Starting dragg...")
+      if (Director.isTouchScreen) {
+        Director.window.navigator.notification.vibrate(100);
+      }
+  }
+ //Global events 
+  , eventDown: function(location) {
+      this._selected = this.getSelected(location);
+      if (!this._selected) return;
+      console.log("Select item:",this._selected);
+      this.tm = setTimeout(this.startDrag.bind(this), 600)
+  }
+  , eventUp: function() {
+      if (this.tm) clearTimeout(this.tm);
+      this.tm = null;
+      if (!this._selected) return;
+      var i;
+      if (!this._isdragging) {
+        i = this._selected.idx;
+        this.info.string = "Mouse UP:" + this._selected.idx;
+        
+        if (this._selected.down ) {
+          
+          var j;
+          for (j = 0; j < this.pos1.length; j++) {
+            if (!this.pos1[j].letter) break;
+          }
+          
+          this._selected.idx1 = j;
+          this.pos1[j].letter = this._selected;
+          this.pos2[i].letter = null;
+          this._selected.flyTo(this.pos1[j].origin);
+          this._selected.down = false;
+        } else {
+          
+          
+          this._selected.flyTo(this.pos2[i].origin);
+          this.pos1[this._selected.idx1].letter = null;
+          this._selected.down = true;
+        }
+      } else {
+        //for (var i = 0; i < this.pos)
+      }
+
+      this._isdragging = false;
+      this._selected = null;
+  }
+  , eventDrag: function(location) {
+    if (!this._isdragging || !this._selected) return;
+    var local	= this.convertToNodeSpace(location)
+    local.x -= 20;
+    local.y -= 50;
+    if (Director.isTouchScreen) {
+      local.x -= 20;
+      local.y -= 50;
+    }    
+    this._selected.position = ccp(local.x, local.y);
+  }
+
+//Mouse events
+  , mouseDown: function(event) {
+    this.info.string = "Mouse DOWN";
+    this.eventDown(event.locationInCanvas);
+    
     return true;
   }
-  , mouseMove: function (event) {
+  , mouseUp: function (event) {
+    this.info.string = "Mouse UP"
+    this.eventUp();
+    return true;
+  }
+  , mouseMoved: function (event) {
+    if (!this._isdragging || !this._selected) return false;
+    this.eventDrag(event.locationInCanvas);
+    
     this.info.string = "Mouse move"
     return true;
   }
+//Touch event
   , touchesBegan: function (event) {
-    var currentTime = new Date();
-    this.info.string = "Touch BEGAN " + new Date().getSeconds()
-        event.preventDefault();
-    return true;
-  }
-  
+    var location = event.touches[0].locationInCanvas;
+    this.info.string = "Touch BEGAN " + new Date().getSeconds() + " x:" + location.x + " y:" + location.y;
+
+    this.eventDown(location);
+  }  
   , touchesEnded: function (event) {
-    this.info.string = "Touch end"
-    event.preventDefault();
-    return true;
+    this.eventUp();
+    this.info.string = "Touch END"
   }
   , touchesCancelled: function (event) {
-    this.info.string = "Touch cancel"
-    event.preventDefault();
-    return true;
+    this.eventUp();
+    this.info.string = "Touch CANCEL"
   }
   , touchesMoved: function (event) {
-    var location = event.touches[0].locationInCanvas
-    this.info.string = "Touch moved x:" + location.x + " y:" + location.y
+    var location = event.touches[0].locationInCanvas;
+    this.info.string = "Moved x:" + location.x + " y:" + location.y
+    this.eventDrag(location);
+    
     event.preventDefault();
-    return false;
+  }
+  , touchesBack: function (event) {
+    this.info.string = "Back is pressed";
+    event.stopPropagation();
+    Director.window.navigator.app.exitApp();
   }
   
 });
