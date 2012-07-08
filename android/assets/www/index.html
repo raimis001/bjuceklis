@@ -1,141 +1,38 @@
-<!DOCTYPE HTML>
-
+<!doctype html>
 <html>
-<head>
-	<title>Burtu juceklis</title>
-	<script type="text/javascript" src="lib/closure/closure/goog/base.js"></script>
-	<script type="text/javascript" src="js/bjuceklis.js"></script>
-  <script type="text/javascript" src="lib/phonegap.js"></script>
-  
-  
-	<script src="http://code.createjs.com/easeljs-0.4.1.min.js"></script>
-	<script type="text/javascript" src="lib/tweenjs/Tween.js"></script>
-	<script type="text/javascript" src="lib/tweenjs/Ease.js"></script>
-  
-  <script type="text/javascript" charset="utf-8">
-
-      // Call onDeviceReady when PhoneGap is loaded.
-      //
-      // At this point, the document has loaded but phonegap.js has not.
-      // When PhoneGap is loaded and talking with the native device,
-      // it will call the event `deviceready`.
-      // 
-      document.addEventListener("deviceready",onDeviceReady, false);
-
-      // PhoneGap is loaded and it is now safe to make calls PhoneGap methods
-      //
-      function onDeviceReady() {
-          // Register the event listener
-          document.addEventListener("backbutton", onBackKeyDown, false);
-          
-          //doolitle.backGame();
-
-          
-//        window.localStorage.setItem("key", "value");
-//        var keyname = window.localStorage.key(i);
-//        // keyname is now equal to "key"
-//        var value = window.localStorage.getItem("key");
-//        // value is now equal to "value"
-//        window.localStorage.removeItem("key");
-//        window.localStorage.setItem("key2", "value2");
-//        window.localStorage.clear();
-//          
-          doolitle.start();
-        }
-
-      // Handle the back button
-      //
-      function onBackKeyDown() {
-        //alert("Back");
-        //if (!taptrain.endGame()) 
-        device.exitApp();
-    }
-
-      </script>
-
-  
-  <script type="text/javascript">
-
-    // Call onDeviceReady when PhoneGap is loaded.
-    //
-    // At this point, the document has loaded but phonegap.js has not.
-    // When PhoneGap is loaded and talking with the native device,
-    // it will call the event `deviceready`.
-    // 
-    //console.log("aaaaa")
-      
-//    function populateDB(tx) {
-//         tx.executeSql('DROP TABLE IF EXISTS DEMO');
-//         tx.executeSql('CREATE TABLE IF NOT EXISTS DEMO (id unique, data)');
-//         tx.executeSql('INSERT INTO DEMO (id, data) VALUES (1, "First row")');
-//         tx.executeSql('INSERT INTO DEMO (id, data) VALUES (2, "Second row")');
-//         
-//    }    
-//    function errorCB(tx, err) {
-//      console.log(tx)
-//    }
-//    function querySuccess(tx, results) {
-        // this will be empty since no rows were inserted.
-      //console.log(results);
-      //len = results.rows.length;
-      
-//      for (var i=0; i<len; i++){
-//        console.log("Row = " + i + " ID = " + results.rows.item(i).id + " Data =  " + results.rows.item(i).data);
-//      }       
-        //console.log("Insert ID = " + results.insertId);
-        // this will be 0 since it is a select statement
-        //console.log("Rows Affected = " + results.rowAffected);
-        // the number of rows returned by the select statement
-        //console.log("Insert ID = " + results.rows.length);
-//    }
-    // Transaction success callback
-    //
-//    function successCB() {
-//      tx.executeSql('SELECT * FROM DEMO', [], querySuccess, errorCB);
-//      //console.log("success")
-//    }    
-     
-//    document.addEventListener("deviceready", onDeviceReady, false);
-//    function onDeviceReady() {
-//      //doolitle.startGame();
-//      doolitle.MAINDATA = "Telefons";
-//      document.addEventListener("backbutton", onBackKeyDown, false);
-//    }
-//    
-//    function onBackKeyDown() {
-//      doolitle.backGame();      
-//    }
-    
-    // PhoneGap is loaded and it is now safe to make calls PhoneGap methods
-    //
-    //function onDeviceReady() {
-        // Register the event listener
-//        var db = window.openDatabase("test", "1.0", "doolitls", 1000000);
-//          db.transaction(populateDB, errorCB, successCB);
-//      console.log("Device is loaded");
-//  
-//        window.localStorage.setItem("key", "value");
-//        var keyname = window.localStorage.key(i);
-//        // keyname is now equal to "key"
-//        var value = window.localStorage.getItem("key");
-//        // value is now equal to "value"
-//        window.localStorage.removeItem("key");
-//        window.localStorage.setItem("key2", "value2");
-//        window.localStorage.clear();
-//
-//        document.addEventListener("backbutton", onBackKeyDown, false);
-//    }
-//
-    // Handle the back button
-    //width: 1024px; height: 580px; text-align: center;
-    
-    //onload="bjuceklis.start()"
-  	//src="http://ifrype.com/applications/external/draugiem.js"
-
-    </script>  
-</head>
-
-  <body onload="bjuceklis.start()" style="background: #B0D161;">
-  </body>
-
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, user-scalable=no, target-densitydpi=device-dpi" />        
+        <title>Burtu juceklis</title>
+      	<link href="mobile.css" rel="stylesheet" type="text/css" />
+        <style type="text/css" media="screen">
+            body {
+                font-family: Helvetica, Arial, sans-serif;
+                font-size: 10pt;
+								background: #B0D161;
+            }
+            h1 {
+                text-align: center;
+                text-shadow: 0 2px 1px #fff;
+            }
+            .cocos2d-app {
+                width: 960px;
+                height: 640px;
+								background: #B0D161;
+                display: block;
+                margin: 0 auto;
+                border: 1px solid #000;
+                -webkit-box-shadow: 0 3px 10px rgba(0, 0, 0, 0.75);
+                -moz-box-shadow:    0 3px 10px rgba(0, 0, 0, 0.75);
+                -o-box-shadow:      0 3px 10px rgba(0, 0, 0, 0.75);
+                box-shadow:         0 3px 10px rgba(0, 0, 0, 0.75);
+            }
+        </style>
+    </head>
+    <body>
+        <div class="cocos2d-app">
+            Loading Bjcocos...
+            <script src="bjcocos/init.js" type="text/javascript"></script>
+        </div>
+    </body>
 </html>
