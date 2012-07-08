@@ -22,7 +22,6 @@ var Layer    = nodes.Layer
  * @extends cocos.nodes.Layer
  */
 var WIDTH = 0, HEIGHT = 0;
-var CONSOLE = true;
 function bjScene () {
     // You must always call the super class constructor
     bjScene.superclass.constructor.call(this)
@@ -30,14 +29,13 @@ function bjScene () {
 		WIDTH		= main.main.WIDTH;
 		HEIGHT	= main.main.HEIGHT;
 
-    //if (!Director.sharedDirector.isTouchScreen) CONSOLE = false;
 
 		var layer = new layers.interfaceLayer();
-		this.addChild({ child: layer, z: -99 })
+		this.addChild({child: layer, z: -99})
 		
     
     // Create info label
-  	this.label = new Label({ string:   'INFO'
+  	this.label = new Label({string:   'INFO'
 												, fontName: 'Arial'
 												, fontSize: 24
 												, fontColor: '#000'
@@ -60,16 +58,12 @@ function bjScene () {
       word: "j\u012bgstu"
     };
     
-    if (CONSOLE) {
-      this.startGame(this.data)
-    } else {
       var url = "http://game.atrodivardu.lv/index.php/game?session=34f404405adbde524d9ccb7bdc273421&mobile=1";
 
       var xhr = new loader.jsonLoader(url);
         xhr.loaded	= this.startGame.bind(this); 
         xhr.onerror = this.errorGame.bind(this);
         xhr.load();
-    }
 }
 
 // Inherit from cocos.nodes.Layer
@@ -96,12 +90,17 @@ bjScene.inherit(Scene,{
 		this.word = data;
 		this.game = new layers.playLayer(this.word);
 		this.addChild(this.game);
+    
+    events.addListener(this.game, 'check_word',    this.checkWord.bind(this))
 	},
+  checkWord: function(event) {
+    console.log("Checking word:",event);
+    
+    if (this.word.test.indexOf(event) > -1) alert("UZVARA");
+    
+  },
 	getWord: function() {
     this.label.string = "Start Load word";
-    if (CONSOLE) {
-      this.onGetWord(this.word);
-    } else {
     
       var url = "http://game.atrodivardu.lv/index.php/loader/get_word?session=34f404405adbde524d9ccb7bdc273421&json=1";
 
@@ -109,7 +108,6 @@ bjScene.inherit(Scene,{
         xhr.loaded	= this.onGetWord.bind(this); 
         xhr.onerror = this.errorGame.bind(this); 
         xhr.load();
-    }
 	}
 })
 
@@ -191,7 +189,8 @@ function main () {
     // Get director singleton
     var director = Director.sharedDirector
 			director.backgroundColor = '#B4D565';
-
+      director.displayFPS = true;
+      
     // Wait for the director to finish preloading our assets
     events.addListener(director, 'ready', function (director) {
       
@@ -233,7 +232,6 @@ var Layer    = nodes.Layer
   , Sprite   = nodes.Sprite
   , Director = cocos.Director.sharedDirector
 
-var TouchDispatcher = require('cocos2d/TouchDispatcher').TouchDispatcher
 
 var WIDTH = 0, HEIGHT = 0;
 var WORD = "";
@@ -341,6 +339,8 @@ function letterLayer(letter, pos, i, callback) {
 	this.letter = letter;
   this.down = true;
 
+  this.delta = ccp(7,6);
+
 	var back = new nodes.Sprite({file:'/res/b_fons.png'});
 		back.anchorPoint = new geo.Point(0,0);
 		this.addChild(back);
@@ -356,7 +356,7 @@ function letterLayer(letter, pos, i, callback) {
     this.label.position = new geo.Point(back.contentSize.width * 0.5, back.contentSize.height - 5);
     this.addChild(this.label)
 		
-	this.position = new geo.Point(pos.x + 7, pos.y + 5);
+	this.position = new geo.Point(pos.x + this.delta.x, pos.y + this.delta.y);
 
 	this.rect = geo.rectMake(
 		back.position.x - back.contentSize.width  * back.anchorPoint.x,
@@ -368,27 +368,22 @@ function letterLayer(letter, pos, i, callback) {
 	
 }
 letterLayer.inherit(Layer, {
-    // Mouse Events
-    itemForMouseEvent: function (event) {
-				if (!this.letter) return null;
-				
-				var location;
-		    if (Director.isTouchScreen) 
-					location = Director.convertTouchToCanvas(event.touch);
-					else location	= event.locationInCanvas;
-				
-				var local	= this.convertToNodeSpace(location)
-				
-				if (geo.rectContainsPoint(this.rect, local)) return this
-
-        return null
-    }
+  isfly: false
 	, setLetter: function(letter) {
       this.letter = letter;
       this.label.string = letter
 	}
+  , endFly: function() {
+    this.isfly = false;
+    events.trigger(this.parent, 'end_fly');
+  }
   , flyTo: function(location) {
-    var action = new actions.MoveTo({ duration: 0.2, position: ccp(location.x, location.y) });
+    this.isfly = true;
+    var action = new actions.Sequence({ actions: [ 
+          new actions.MoveTo({ duration: 0.2, position: ccp(location.x + this.delta.x, location.y + this.delta.y) })
+        , new actions.CallFunc({ target: this, method: 'endFly' })    
+    ]});
+  
     this.runAction(action);
   }
 
@@ -412,7 +407,7 @@ function wordLayer(word) {
 		this.addChild({child:sp, z: -10});
     this.pos1[i] = this.getRect(sp);
     this.pos1[i].letter = null;
-    console.log(this.pos1[i])
+    //console.log(this.pos1[i])
     
 //Seccond line    
 		sp = new nodes.Sprite({file:'/res/b_back.png'});
@@ -463,6 +458,7 @@ wordLayer.inherit(Layer, {
   _isdragging: false
   
   , registerWithTouchDispatcher11: function () {
+    var TouchDispatcher = require('cocos2d/TouchDispatcher').TouchDispatcher;
     if (TouchDispatcher) this.info.string = "Touch dispatcher;"
     TouchDispatcher.sharedDispatcher.addTargetedDelegate(this, 128, false)
     this.info.string = "Touch dispatcher SET"
@@ -471,14 +467,16 @@ wordLayer.inherit(Layer, {
     var rect = geo.rectMake(
       sprite.position.x - sprite.contentSize.width  * sprite.anchorPoint.x,
       sprite.position.y - sprite.contentSize.height * sprite.anchorPoint.y,
-      sprite.contentSize.width,
-      sprite.contentSize.height
+      sprite.contentSize.width - 5,
+      sprite.contentSize.height - 5
     );
-    rect.origin = ccp(this.position.x + sprite.position.x + 7,this.position.y + sprite.position.y + 5);
+    rect.origin = ccp(this.position.x + sprite.position.x,this.position.y + sprite.position.y);
     return rect;
   }
   , getSelected: function(location) {
       for (var i = 0; i < this.letters.length; i++) {
+        if (this.letters[i].isfly) continue;
+        
         var local	= this.letters[i].convertToNodeSpace(location)
         var rect = this.letters[i].rect;
 				if (geo.rectContainsPoint(rect, local)) return this.letters[i]
@@ -489,52 +487,86 @@ wordLayer.inherit(Layer, {
       this._isdragging = true;
       this.tm = null;
       this.info.string = "Starting dragg..."
-      console.log("Starting dragg...")
+      //console.log("Starting dragg...")
       if (Director.isTouchScreen) {
-        Director.window.navigator.notification.vibrate(100);
+        Director.window.navigator.notification.vibrate(70);
       }
+  }
+  , endFly: function() {
+      var word = "";
+      for (var j = 0; j < this.pos1.length; j++) {
+        if (!this.pos1[j].letter) return;
+        word = word + this.pos1[j].letter.letter;
+      }
+      this.info.string = word;
+      events.trigger(this.parent, 'check_word', WORD);
   }
  //Global events 
   , eventDown: function(location) {
       this._selected = this.getSelected(location);
       if (!this._selected) return;
-      console.log("Select item:",this._selected);
-      this.tm = setTimeout(this.startDrag.bind(this), 600)
+      //console.log("Select item:",this._selected);
+      if (this._selected.down) this.tm = setTimeout(this.startDrag.bind(this), 300)
   }
   , eventUp: function() {
       if (this.tm) clearTimeout(this.tm);
       this.tm = null;
       if (!this._selected) return;
-      var i;
+      var i = this._selected.idx;
+      var j;
       if (!this._isdragging) {
-        i = this._selected.idx;
         this.info.string = "Mouse UP:" + this._selected.idx;
         
-        if (this._selected.down ) {
+        if (this._selected.down ) {          
           
-          var j;
           for (j = 0; j < this.pos1.length; j++) {
             if (!this.pos1[j].letter) break;
           }
           
           this._selected.idx1 = j;
+          this._selected.down = false;
+          
           this.pos1[j].letter = this._selected;
           this.pos2[i].letter = null;
+          
           this._selected.flyTo(this.pos1[j].origin);
-          this._selected.down = false;
+          
         } else {
-          
-          
-          this._selected.flyTo(this.pos2[i].origin);
           this.pos1[this._selected.idx1].letter = null;
           this._selected.down = true;
+          
+          this._selected.flyTo(this.pos2[i].origin);
+          
         }
       } else {
         //for (var i = 0; i < this.pos)
+        var ower = -1;
+        var local	= this._selected.position;
+        for (j = 0; j < this.pos1.length; j++) {
+          if (this.pos1[j].letter) continue;
+          
+          if (geo.rectContainsPoint(this.pos1[j], local)) {
+            ower = j;
+            break;
+          }
+        }
+        if (ower > -1) {
+          this._selected.idx1 = ower;
+          this._selected.down = false;
+          
+          this.pos1[ower].letter = this._selected;
+          this.pos2[i].letter = null;
+          
+          this._selected.flyTo(this.pos1[ower].origin);
+        } else {
+          this._selected.flyTo(this.pos2[i].origin);
+        }
       }
-
+      
       this._isdragging = false;
       this._selected = null;
+      
+      setTimeout(this.endFly.bind(this), 200)
   }
   , eventDrag: function(location) {
     if (!this._isdragging || !this._selected) return;
@@ -552,7 +584,6 @@ wordLayer.inherit(Layer, {
   , mouseDown: function(event) {
     this.info.string = "Mouse DOWN";
     this.eventDown(event.locationInCanvas);
-    
     return true;
   }
   , mouseUp: function (event) {
@@ -562,9 +593,8 @@ wordLayer.inherit(Layer, {
   }
   , mouseMoved: function (event) {
     if (!this._isdragging || !this._selected) return false;
-    this.eventDrag(event.locationInCanvas);
-    
     this.info.string = "Mouse move"
+    this.eventDrag(event.locationInCanvas);
     return true;
   }
 //Touch event

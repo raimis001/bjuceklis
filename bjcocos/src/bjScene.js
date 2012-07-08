@@ -20,7 +20,6 @@ var Layer    = nodes.Layer
  * @extends cocos.nodes.Layer
  */
 var WIDTH = 0, HEIGHT = 0;
-var CONSOLE = true;
 function bjScene () {
     // You must always call the super class constructor
     bjScene.superclass.constructor.call(this)
@@ -28,7 +27,6 @@ function bjScene () {
 		WIDTH		= main.main.WIDTH;
 		HEIGHT	= main.main.HEIGHT;
 
-    //if (!Director.sharedDirector.isTouchScreen) CONSOLE = false;
 
 		var layer = new layers.interfaceLayer();
 		this.addChild({child: layer, z: -99})
@@ -58,16 +56,12 @@ function bjScene () {
       word: "j\u012bgstu"
     };
     
-    if (CONSOLE) {
-      this.startGame(this.data)
-    } else {
       var url = "http://game.atrodivardu.lv/index.php/game?session=34f404405adbde524d9ccb7bdc273421&mobile=1";
 
       var xhr = new loader.jsonLoader(url);
         xhr.loaded	= this.startGame.bind(this); 
         xhr.onerror = this.errorGame.bind(this);
         xhr.load();
-    }
 }
 
 // Inherit from cocos.nodes.Layer
@@ -105,9 +99,6 @@ bjScene.inherit(Scene,{
   },
 	getWord: function() {
     this.label.string = "Start Load word";
-    if (CONSOLE) {
-      this.onGetWord(this.word);
-    } else {
     
       var url = "http://game.atrodivardu.lv/index.php/loader/get_word?session=34f404405adbde524d9ccb7bdc273421&json=1";
 
@@ -115,7 +106,6 @@ bjScene.inherit(Scene,{
         xhr.loaded	= this.onGetWord.bind(this); 
         xhr.onerror = this.errorGame.bind(this); 
         xhr.load();
-    }
 	}
 })
 

@@ -4315,7 +4315,7 @@ Director.inherit(Object, /** @lends cocos.Director# */ {
             this.context.translate(0, height)
             this.context.scale(1, -1)
         }
-        console.log("End resize:")
+
         events.trigger(this, 'resize')
     }
 
@@ -4734,10 +4734,6 @@ function DirectorTouchScreen () {
     } else if (ua.match(/(iPad)/)) {
         this.viewportSize = { portrait:  new geo.Size(768, 928)
                             , landscape: new geo.Size(1024, 672)
-                            }
-    } else if (ua.match(/(Android)/)) {
-        this.viewportSize = { portrait:  new geo.Size(480, 960)
-                            , landscape: new geo.Size(960, 280)
                             }
     }
 }
@@ -27266,7 +27262,7 @@ var kMenuTouchPriority = -128
  */
 function Menu (opts) {
     Menu.superclass.constructor.call(this, opts)
-    console.log("Menu created")
+
     var items = opts.items
 
     if (Director.sharedDirector.isTouchScreen) {
@@ -31663,7 +31659,7 @@ TouchDispatcher.inherit(Object, /** @lends cocos.TouchDispatcher# */ {
             handler = this.targetedHandlers[i]
             if (handler.delegate === delegate) {
                 this.targetedHandlers.splice(i, 1)
-                //handler.claimedTouches
+                handler.claimedTouches
                 break
             }
         }

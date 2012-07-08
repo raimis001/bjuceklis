@@ -1,0 +1,1 @@
+copy "K:\www\bjuceklis\android\bin\android-debug.apk" "C:\Users\raimis\Dropbox" /Y
