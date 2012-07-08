@@ -31,11 +31,11 @@ function bjScene () {
     //if (!Director.sharedDirector.isTouchScreen) CONSOLE = false;
 
 		var layer = new layers.interfaceLayer();
-		this.addChild({ child: layer, z: -99 })
+		this.addChild({child: layer, z: -99})
 		
     
     // Create info label
-  	this.label = new Label({ string:   'INFO'
+  	this.label = new Label({string:   'INFO'
 												, fontName: 'Arial'
 												, fontSize: 24
 												, fontColor: '#000'
@@ -94,7 +94,15 @@ bjScene.inherit(Scene,{
 		this.word = data;
 		this.game = new layers.playLayer(this.word);
 		this.addChild(this.game);
+    
+    events.addListener(this.game, 'check_word',    this.checkWord.bind(this))
 	},
+  checkWord: function(event) {
+    console.log("Checking word:",event);
+    
+    if (this.word.test.indexOf(event) > -1) alert("UZVARA");
+    
+  },
 	getWord: function() {
     this.label.string = "Start Load word";
     if (CONSOLE) {

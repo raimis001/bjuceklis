@@ -26,7 +26,8 @@ function main () {
     // Get director singleton
     var director = Director.sharedDirector
 			director.backgroundColor = '#B4D565';
-
+      director.displayFPS = true;
+      
     // Wait for the director to finish preloading our assets
     events.addListener(director, 'ready', function (director) {
       
