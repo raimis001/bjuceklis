@@ -29,6 +29,9 @@ function main () {
 
     // Wait for the director to finish preloading our assets
     events.addListener(director, 'ready', function (director) {
+      
+        //if (Director.sharedDirector.isTouchScreen)  document.write('<link rel="stylesheet" type="text/css" href="mobile.css">');      
+        
         // Create a scene and layer
         var scene = new bjScene()
 				

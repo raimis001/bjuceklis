@@ -16,6 +16,8 @@ var Layer    = nodes.Layer
   , Sprite   = nodes.Sprite
   , Director = cocos.Director
 
+var TouchDispatcher = require('cocos2d/TouchDispatcher').TouchDispatcher
+
 var WIDTH = 0, HEIGHT = 0;
 var WORD = "";
 var layers = {}
@@ -97,18 +99,6 @@ function playLayer (data) {
 		this.words = new wordLayer(WORD);
 		this.addChild(this.words);
 		
-//		var pos = new geo.Point(0,0);
-//		for (var i = 0; i < WORD.length; i++) {
-//			
-//			var l = new letterLayer("",pos,i);
-//			this.addChild(l);
-//			
-//			var t = new letterLayer(WORD.charAt(i),new geo.Point(pos.x, 70),i,this.pressChoice.bind(this));
-//			this.addChild(t);
-//			
-//			pos.x += 50;
-//		}		
-		
 		var move = new actions.MoveTo({ duration: 0.95, position: new geo.Point(160, 120) })
 			move = new actions.EaseBounceOut({ action: move.copy() })
 			
@@ -149,9 +139,9 @@ function letterLayer(letter, pos, i, callback) {
 		
 	this.position = new geo.Point(pos.x + 7, pos.y + 5);
 	if (Director.sharedDirector.isTouchScreen) {
-			this.isTouchEnabled = true
+			//this.isTouchEnabled = true
 	} else {
-			this.isMouseEnabled = true
+      //this.isMouseEnabled = true
 	}
 
 	this.rect = geo.rectMake(
@@ -164,6 +154,10 @@ function letterLayer(letter, pos, i, callback) {
 	
 }
 letterLayer.inherit(Layer, {
+    registerWithTouchDispatcher: function () {
+      var TouchDispatcher = cocos.TouchDispatcher.TouchDispatcher;
+        TouchDispatcher.sharedDispatcher.addTargetedDelegate(this, -128, true)
+    },
     // Mouse Events
     itemForMouseEvent: function (event) {
 				if (!this.letter) return null;
@@ -190,6 +184,7 @@ letterLayer.inherit(Layer, {
   , touchesEnded: function (event) {
      var selectedItem = this.itemForMouseEvent(event)
 		 if (!selectedItem) return false;
+		 if (selectedItem.callback) selectedItem.callback(selectedItem)
 		 
      return true
     }
@@ -209,28 +204,92 @@ function wordLayer(word) {
 	for (var i = 0; i < word.length; i++) {
 		var sp = new nodes.Sprite({file:'/res/b_back.png'});
 			sp.anchorPoint = ccp(0,0);
-			sp.position = ccp(pos.x, pos.y); 
+			sp.position = ccp(pos.x, pos.y + 50); 
 		this.addChild({child:sp, z: -10});
 		sp = new nodes.Sprite({file:'/res/b_back.png'});
 			sp.anchorPoint = ccp(0,0);
-			sp.position = ccp(pos.x, pos.y + 80); 
+			sp.position = ccp(pos.x, pos.y + 80 + 50); 
 		
 		this.addChild({child:sp, z: -10});
 		
-		var t = new letterLayer(word.charAt(i),new geo.Point(pos.x, 80),i, this.pressChoice.bind(this));
+		var t = new letterLayer(word.charAt(i),new geo.Point(pos.x, 80 + 50),i, this.pressChoice.bind(this));
 		this.addChild({ child:t, z: 0});
 
 		wordArray[i] = '';
 
 		pos.x += 60;
+    
+    
 	}		
+  // Create label
+  this.info = new Label({ string:   "INFO"
+                        , fontName: 'Arial'
+                        , fontSize: 30
+                        , fontColor: '#000'
+                        })
+
+    this.info.anchorPoint = new geo.Point(0,0);
+    this.info.position = new geo.Point(0,0);
+    this.addChild(this.info)
+
+
+  if (Director.sharedDirector.isTouchScreen) {
+      //this.isTouchEnabled = true
+      
+      var canvas = Director.sharedDirector.canvas;
+      
+        canvas.addEventListener('touchstart',  this.touchesBegan.bind(this), true)
+        canvas.addEventListener('touchmove',   this.touchesMoved.bind(this), true)
+        canvas.addEventListener('touchend',    this.touchesEnded.bind(this), true)
+        canvas.addEventListener('touchcancel', this.touchesCancelled.bind(this), true)
+      
+  } else {
+      this.isMouseEnabled = true
+  }
 	
 }
 wordLayer.inherit(Layer, {
-	pressChoice: function(idx) {
+  registerWithTouchDispatcher11: function () {
+    if (TouchDispatcher) this.info.string = "Touch dispatcher;"
+   //TouchDispatcher.sharedDispatcher.addTargetedDelegate(this, 128, false)
+   this.info.string = "Touch dispatcher SET"
+  }
+	, pressChoice: function(idx) {
 		console.log("pressed:", idx);
 		idx.setLetter('')
 	}
+  , mouseUp: function (event) {
+    this.info.string = "Mouse press"
+    return true;
+  }
+  , mouseMove: function (event) {
+    this.info.string = "Mouse move"
+    return true;
+  }
+  , touchesBegan: function (event) {
+    var currentTime = new Date();
+    this.info.string = "Touch BEGAN " + new Date().getSeconds()
+        event.preventDefault();
+    return true;
+  }
+  
+  , touchesEnded: function (event) {
+    this.info.string = "Touch end"
+    event.preventDefault();
+    return true;
+  }
+  , touchesCancelled: function (event) {
+    this.info.string = "Touch cancel"
+    event.preventDefault();
+    return true;
+  }
+  , touchesMoved: function (event) {
+    var location = event.touches[0].locationInCanvas
+    this.info.string = "Touch moved x:" + location.x + " y:" + location.y
+    event.preventDefault();
+    return false;
+  }
+  
 });
 
 
