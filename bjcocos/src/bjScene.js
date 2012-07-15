@@ -20,6 +20,9 @@ var Layer    = nodes.Layer
  * @extends cocos.nodes.Layer
  */
 var WIDTH = 0, HEIGHT = 0;
+var DEBUG = false;
+var URL = "http://game.atrodivardu.lv/index.php/";
+var U_SESSION = "session=34f404405adbde524d9ccb7bdc273421";
 function bjScene () {
     // You must always call the super class constructor
     bjScene.superclass.constructor.call(this)
@@ -41,7 +44,7 @@ function bjScene () {
 
 		this.label.anchorPoint = new geo.Point(0,0);
     this.label.position = new geo.Point(170, 10);
-    this.addChild(this.label)
+    //this.addChild(this.label)
     
 		this.data = {
       uid:3345
@@ -55,58 +58,97 @@ function bjScene () {
       type: 2,
       word: "j\u012bgstu"
     };
+    this.check = {
+      level: "8",
+      lives: "99993013",
+      note: "\u0136\u012bmisk\u0101 elementa un sk\u0101bek\u013ca savienojums",
+      points: 5422,
+      test: this.word.test,
+      tword: this.word.test,
+      v_value: "1000",
+      victory: 0,
+      word: this.word.test      
+    };
     
-      var url = "http://game.atrodivardu.lv/index.php/game?session=34f404405adbde524d9ccb7bdc273421&mobile=1";
+		this.game = new layers.playLayer();
+		this.addChild(this.game);
+    
+    if (!DEBUG) {
+      var url = URL + "game?mobile=1&" + U_SESSION;
 
       var xhr = new loader.jsonLoader(url);
         xhr.loaded	= this.startGame.bind(this); 
         xhr.onerror = this.errorGame.bind(this);
         xhr.load();
+    } else {
+      this.startGame(this.data);
+    }
 }
 
-// Inherit from cocos.nodes.Layer
 bjScene.inherit(Scene,{
-	startGame: function(data) {
-		//console.log(data);
+	errorGame: function() {
+    this.label.string = "ERROR: Game data loded1";
+		console.log("Error");
+	}
+	, startGame: function(data) {
     this.label.string = "Game data loded";
 		this.data = data;
-		this.game = new layers.gameLayer()
-		this.addChild(this.game);
 		
-    events.addListener(this.game, 'begin_game',    this.beginGame.bind(this))
-	},
-	beginGame: function() {
-		this.removeChild(this.game);
+    this.game.startGame();
+	}
+	, beginGame: function() {
 		this.getWord();
-	},
-	errorGame: function() {
-    this.label.string = "ERROR: Game data loded";
-		console.log("Error");
-	},
-	onGetWord: function(data) {
+	}
+	, onGetWord: function(data) {
     this.label.string = "Word loaded - " + data.test;
+    
 		this.word = data;
-		this.game = new layers.playLayer(this.word);
-		this.addChild(this.game);
-    
-    events.addListener(this.game, 'check_word',    this.checkWord.bind(this))
-	},
-  checkWord: function(event) {
-    console.log("Checking word:",event);
-    
-    if (this.word.test.indexOf(event) > -1) alert("UZVARA");
-    
-  },
-	getWord: function() {
+		this.game.startWord(this.word);
+	}
+	, getWord: function() {
     this.label.string = "Start Load word";
     
-      var url = "http://game.atrodivardu.lv/index.php/loader/get_word?session=34f404405adbde524d9ccb7bdc273421&json=1";
+      if (!DEBUG) {
+        var url = URL + "loader/get_word?json=1&" + U_SESSION;
 
-      var xhr = new loader.jsonLoader(url);
-        xhr.loaded	= this.onGetWord.bind(this); 
-        xhr.onerror = this.errorGame.bind(this); 
-        xhr.load();
+        var xhr = new loader.jsonLoader(url);
+          xhr.loaded	= this.onGetWord.bind(this); 
+          xhr.onerror = this.errorGame.bind(this); 
+          xhr.load();
+      } else {
+        this.onGetWord(this.word); 
+      }
 	}
+  , onCheckWord: function(data) {
+    this.game.setNote(data);
+  }
+  , checkWord: function(event) {
+    
+    if (!DEBUG) {
+      var url = URL + "loader/check_word?json=1&" + U_SESSION + "&word=" + event;
+        var xhr = new loader.jsonLoader(url);
+          xhr.loaded	= this.onCheckWord.bind(this); 
+          xhr.onerror = this.errorGame.bind(this); 
+          xhr.load();
+    } else {
+      this.onCheckWord(this.check);
+    }
+    
+  }
+  , onTimeOut: function(data) {
+    this.game.setNote(data);
+  }
+  , timeOut: function() {
+    if (!DEBUG) {
+      var url = URL + "loader/time_out?json=1&" + U_SESSION;
+        var xhr = new loader.jsonLoader(url);
+          xhr.loaded	= this.onTimeOut.bind(this); 
+          xhr.onerror = this.errorGame.bind(this); 
+          xhr.load();
+    } else {
+      this.onTimeOut(this.check);
+    }
+  }
 })
 
 module.exports = bjScene
