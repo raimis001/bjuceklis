@@ -20,7 +20,7 @@ var Layer    = nodes.Layer
  * @extends cocos.nodes.Layer
  */
 var WIDTH = 0, HEIGHT = 0;
-var DEBUG = false;
+var DEBUG = true;
 var URL = "http://game.atrodivardu.lv/index.php/";
 var U_SESSION = "session=34f404405adbde524d9ccb7bdc273421";
 function bjScene () {

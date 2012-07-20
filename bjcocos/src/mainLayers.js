@@ -23,12 +23,7 @@ var WIDTH = 0, HEIGHT = 0;
 var WORD = "";
 var layers = {}
 
-/**
- * @class Initial application layer
- * @extends cocos.nodes.Layer
- */
 function interfaceLayer () {
-    // You must always call the super class constructor
     interfaceLayer.superclass.constructor.call(this)
 		
 		WIDTH = main.main.WIDTH;
@@ -40,8 +35,6 @@ function interfaceLayer () {
 
 }
 layers.interfaceLayer = interfaceLayer
-
-// Inherit from cocos.nodes.Layer
 interfaceLayer.inherit(Layer);
 
 function pretendLayer() {
@@ -147,7 +140,7 @@ playLayer.inherit(Layer, {
     
 		this.data = data;
     console.log(this.data);
-		WORD = this.data.test;
+		WORD = this.data.word;
 		
     this.layer = new wordLayer(this.data);
 		this.addChild(this.layer);
@@ -186,6 +179,9 @@ playLayer.inherit(Layer, {
     this.pretender.changeScore(5);
     
     this.parent.checkWord(word);
+	}
+	, givUp: function() {
+		this.createTimeout();
 	}
   , setNote: function(data) {
     if (this.popup) this.popup.setNote(data);
@@ -300,9 +296,9 @@ function wordLayer(data) {
 
   this.data = data;
 
-  var word = data.test;
+  var word = data.word;
 
-	var pos = ccp(0,0);
+	var pos = ccp(0,20);
   var sp;
 	this.letters = new Array();
   this.pos1    = new Array();
@@ -312,21 +308,21 @@ function wordLayer(data) {
 //First line    
 		sp = new nodes.Sprite({file:'/res/b_back.png'});
 			sp.anchorPoint = ccp(0,0);
-			sp.position = ccp(pos.x, pos.y + 50); 
+			sp.position = ccp(pos.x, pos.y ); 
 		this.addChild({child:sp, z: -10});
     this.pos1[i] = this.getRect(sp);
     this.pos1[i].letter = null;
-    
+		
 //Seccond line    
 		sp = new nodes.Sprite({file:'/res/b_back.png'});
 			sp.anchorPoint = ccp(0,0);
-			sp.position = ccp(pos.x, pos.y + 80 + 50); 
+			sp.position = ccp(pos.x, pos.y + 80); 
 		this.addChild({child:sp, z: -10});
     this.pos2[i] = this.getRect(sp);
     this.pos2[i].letter = sp;
 
 //Letter
-		var t = new letterLayer(word.charAt(i),ccp(pos.x, 80 + 50),i);
+		var t = new letterLayer(word.charAt(i),ccp(pos.x, pos.y + 80),i);
 		this.letters[i] = t;
 		this.addChild({child:t, z: 0});
 
@@ -338,6 +334,21 @@ function wordLayer(data) {
     this.info.anchorPoint = new geo.Point(0,0);
     this.info.position = new geo.Point(0,0);
     //this.addChild(this.info)
+
+		var item = new nodes.MenuItemImage({
+				normalImage: '/res/bt_givup.png'
+			, selectedImage: '/res/bt_givup.png'
+      , callback: this.givUp.bind(this)			
+		})
+		
+		var menu = new nodes.Menu({items: [item]})
+
+		menu.anchorPoint	= new geo.Point(0,0)
+    menu.position			= new geo.Point(0,120)
+		item.anchorPoint	= new geo.Point(0,0)
+    item.position			= new geo.Point(0,75)
+
+    this.addChild({child: menu , z: 10})
 
 
   if (Director.isTouchScreen) {
@@ -415,6 +426,10 @@ wordLayer.inherit(Layer, {
       }
   }
  //Global events 
+  , givUp: function() {
+		console.log("Giv UP")
+		this.parent.givUp();
+	}
   , eventDown: function(location) {
       if (this._disabled) return;
       this._selected = this.getSelected(location);
