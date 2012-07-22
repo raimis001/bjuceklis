@@ -147,7 +147,7 @@ playLayer.inherit(Layer, {
     
 		this.data = data;
     console.log(this.data);
-		WORD = this.data.test;
+		WORD = this.data.word;
 		
     this.layer = new wordLayer(this.data);
 		this.addChild(this.layer);
@@ -300,7 +300,7 @@ function wordLayer(data) {
 
   this.data = data;
 
-  var word = data.test;
+  var word = data.word;
 
 	var pos = ccp(0,0);
   var sp;

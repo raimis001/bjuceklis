@@ -22,6 +22,9 @@ var Layer    = nodes.Layer
  * @extends cocos.nodes.Layer
  */
 var WIDTH = 0, HEIGHT = 0;
+var DEBUG = false;
+var URL = "http://game.atrodivardu.lv/index.php/";
+var U_SESSION = "session=34f404405adbde524d9ccb7bdc273421";
 function bjScene () {
     // You must always call the super class constructor
     bjScene.superclass.constructor.call(this)
@@ -43,7 +46,7 @@ function bjScene () {
 
 		this.label.anchorPoint = new geo.Point(0,0);
     this.label.position = new geo.Point(170, 10);
-    this.addChild(this.label)
+    //this.addChild(this.label)
     
 		this.data = {
       uid:3345
@@ -57,58 +60,97 @@ function bjScene () {
       type: 2,
       word: "j\u012bgstu"
     };
+    this.check = {
+      level: "8",
+      lives: "99993013",
+      note: "\u0136\u012bmisk\u0101 elementa un sk\u0101bek\u013ca savienojums",
+      points: 5422,
+      test: this.word.test,
+      tword: this.word.test,
+      v_value: "1000",
+      victory: 0,
+      word: this.word.test      
+    };
     
-      var url = "http://game.atrodivardu.lv/index.php/game?session=34f404405adbde524d9ccb7bdc273421&mobile=1";
+		this.game = new layers.playLayer();
+		this.addChild(this.game);
+    
+    if (!DEBUG) {
+      var url = URL + "game?mobile=1&" + U_SESSION;
 
       var xhr = new loader.jsonLoader(url);
         xhr.loaded	= this.startGame.bind(this); 
         xhr.onerror = this.errorGame.bind(this);
         xhr.load();
+    } else {
+      this.startGame(this.data);
+    }
 }
 
-// Inherit from cocos.nodes.Layer
 bjScene.inherit(Scene,{
-	startGame: function(data) {
-		//console.log(data);
+	errorGame: function() {
+    this.label.string = "ERROR: Game data loded1";
+		console.log("Error");
+	}
+	, startGame: function(data) {
     this.label.string = "Game data loded";
 		this.data = data;
-		this.game = new layers.gameLayer()
-		this.addChild(this.game);
 		
-    events.addListener(this.game, 'begin_game',    this.beginGame.bind(this))
-	},
-	beginGame: function() {
-		this.removeChild(this.game);
+    this.game.startGame();
+	}
+	, beginGame: function() {
 		this.getWord();
-	},
-	errorGame: function() {
-    this.label.string = "ERROR: Game data loded";
-		console.log("Error");
-	},
-	onGetWord: function(data) {
+	}
+	, onGetWord: function(data) {
     this.label.string = "Word loaded - " + data.test;
+    
 		this.word = data;
-		this.game = new layers.playLayer(this.word);
-		this.addChild(this.game);
-    
-    events.addListener(this.game, 'check_word',    this.checkWord.bind(this))
-	},
-  checkWord: function(event) {
-    console.log("Checking word:",event);
-    
-    if (this.word.test.indexOf(event) > -1) alert("UZVARA");
-    
-  },
-	getWord: function() {
+		this.game.startWord(this.word);
+	}
+	, getWord: function() {
     this.label.string = "Start Load word";
     
-      var url = "http://game.atrodivardu.lv/index.php/loader/get_word?session=34f404405adbde524d9ccb7bdc273421&json=1";
+      if (!DEBUG) {
+        var url = URL + "loader/get_word?json=1&" + U_SESSION;
 
-      var xhr = new loader.jsonLoader(url);
-        xhr.loaded	= this.onGetWord.bind(this); 
-        xhr.onerror = this.errorGame.bind(this); 
-        xhr.load();
+        var xhr = new loader.jsonLoader(url);
+          xhr.loaded	= this.onGetWord.bind(this); 
+          xhr.onerror = this.errorGame.bind(this); 
+          xhr.load();
+      } else {
+        this.onGetWord(this.word); 
+      }
 	}
+  , onCheckWord: function(data) {
+    this.game.setNote(data);
+  }
+  , checkWord: function(event) {
+    
+    if (!DEBUG) {
+      var url = URL + "loader/check_word?json=1&" + U_SESSION + "&word=" + event;
+        var xhr = new loader.jsonLoader(url);
+          xhr.loaded	= this.onCheckWord.bind(this); 
+          xhr.onerror = this.errorGame.bind(this); 
+          xhr.load();
+    } else {
+      this.onCheckWord(this.check);
+    }
+    
+  }
+  , onTimeOut: function(data) {
+    this.game.setNote(data);
+  }
+  , timeOut: function() {
+    if (!DEBUG) {
+      var url = URL + "loader/time_out?json=1&" + U_SESSION;
+        var xhr = new loader.jsonLoader(url);
+          xhr.loaded	= this.onTimeOut.bind(this); 
+          xhr.onerror = this.errorGame.bind(this); 
+          xhr.load();
+    } else {
+      this.onTimeOut(this.check);
+    }
+  }
 })
 
 module.exports = bjScene
@@ -224,6 +266,7 @@ var cocos  = require('cocos2d')   // Import the cocos2d module
   , ccp    = geo.ccp              // Short hand to create points
   , main   = require('/main')  // Import the geometry module
   , actions   = cocos.actions
+  , MD5    = require('/md5')
 
 // Convenient access to some constructors
 var Layer    = nodes.Layer
@@ -231,6 +274,7 @@ var Layer    = nodes.Layer
   , Label    = nodes.Label
   , Sprite   = nodes.Sprite
   , Director = cocos.Director.sharedDirector
+  , Scheduler = cocos.Scheduler
 
 
 var WIDTH = 0, HEIGHT = 0;
@@ -249,84 +293,203 @@ function interfaceLayer () {
 		HEIGHT = main.main.HEIGHT;
 
 		var logo = new nodes.Sprite({file:'/res/bjuceklis.png'});
-			logo.anchorPoint = new geo.Point(0,0);
-		this.addChild({child:logo, z: -99});
+			logo.anchorPoint = ccp(0,0);
+      this.addChild({child:logo, z: -99});
 
 }
 layers.interfaceLayer = interfaceLayer
 
 // Inherit from cocos.nodes.Layer
-interfaceLayer.inherit(Layer)
+interfaceLayer.inherit(Layer);
+
+function pretendLayer() {
+  pretendLayer.superclass.constructor.call(this);
+  
+  this.position = ccp(-200,0);
+
+    this.pretend = new nodes.Sprite({file:'/res/pretender.png'});
+      this.pretend.anchorPoint = ccp(0.5,1);
+      this.pretend.position = ccp(40,HEIGHT - 130);
+      this.addChild(this.pretend);
+
+    this.enemy = new nodes.Sprite({file:'/res/pretender.png'});
+      this.enemy.anchorPoint = ccp(0.5,1);
+      this.enemy.position = ccp(115,HEIGHT - 130);
+      this.addChild(this.enemy);
+      
+    this.changeScore(0);
+}
+pretendLayer.inherit(Layer,{
+  pretenderScore: 0,
+  enemyScore: 100
+  
+  , changeScore: function(score) {
+    
+    this.pretenderScore += score;
+    
+    var all   = (this.pretenderScore + this.enemyScore);
+    var pall  = 480 * (this.pretenderScore / all);
+    var eall  = 480 * (this.enemyScore / all);
+      
+    this.enemy.rect = new geo.Rect(0, 480 - pall, 70, pall);
+    this.enemy.contentSize = new geo.Size(70,pall);
+    
+    this.pretend.rect = new geo.Rect(0, 480 - eall, 70, eall);
+    this.pretend.contentSize = new geo.Size(70,eall);
+  }
+});
+function clockLayer() {
+  clockLayer.superclass.constructor.call(this);
+  
+  this.position = ccp(0, -120)
+  
+  var back = new nodes.Sprite({file:'/res/clock.png'}); 
+    back.position = ccp(50,60);
+    this.addChild(back);
+    
+  this.rate = new nodes.Sprite({file:'/res/bulta.png'}); 
+    this.rate.position = ccp(50,60);
+    this.addChild(this.rate);
+}
+clockLayer.inherit(Layer,{
+  setClock: function(time) {
+    this.rate.rotation = 360 * time;
+  }
+});
+
+function playLayer () {
+    // You must always call the super class constructor
+    playLayer.superclass.constructor.call(this)
+		this.position = new geo.Point(200,120)
+		this.anchorPoint = new geo.Point(0,0)	
+		
+    this.pretender = new pretendLayer();
+      this.addChild(this.pretender);
+      
+    this.clock = new clockLayer();
+      this.addChild(this.clock);
+}
+playLayer.inherit(Layer, {
+  playTime: 0,
+  
+  startGame: function() {
+    this.clock.setClock(0);
+    
+    this.layer = new gameLayer();
+    this.addChild(this.layer);
+  }
+  , beginGame: function() {
+    this.removeChild(this.layer);
+    this.layer = null;
+    
+    this.wait = new nodes.Sprite({file:'/res/wait1.png'});
+      this.wait.position = ccp(50,100);
+      this.wait.runAction(new actions.RepeatForever(new actions.RotateBy({duration: 1.5, angle: 360})));
+      this.addChild(this.wait);
+    
+    this.parent.beginGame();
+  }
+  , onTimer: function() {
+    this.playTime ++;
+    this.clock.setClock(this.playTime / this.data.time);
+    
+    if (this.playTime > this.data.time) {
+      this.createTimeout();
+    }
+  }
+  , onTimeout: function() {
+    this.createTimeout();
+  }
+  , startWord: function(data) {
+    if (this.wait) this.removeChild(this.wait);
+    
+		this.data = data;
+    console.log(this.data);
+		WORD = this.data.word;
+		
+    this.layer = new wordLayer(this.data);
+		this.addChild(this.layer);
+		
+    this.playTime = 0;
+    this.clock.setClock(0);
+    Scheduler.sharedScheduler.schedule({target:this, method:this.onTimer, interval:1, paused:false});
+    
+    this.timer = setTimeout(this.onTimeout.bind(this), (this.data.time + 5) * 1000 );
+  }
+  , endWord: function() {
+    this.removeChild(this.popup);this.popup = null;
+    this.removeChild(this.layer);this.layer = null;
+    
+    this.startGame();
+    
+  }
+  , createTimeout: function() {
+    this.layer._disabled = true;
+    Scheduler.sharedScheduler.unscheduleAllSelectorsForTarget(this);
+    clearTimeout(this.timer);
+    
+    
+    this.popup = new popupLayer({victory:false, word:""});
+    this.addChild(this.popup);
+    
+    this.parent.timeOut();
+  }
+	, createVictory: function(word) {
+    Scheduler.sharedScheduler.unscheduleAllSelectorsForTarget(this);
+    clearTimeout(this.timer);
+    
+    this.popup = new popupLayer({victory:true, word:word});
+    this.addChild(this.popup);
+    
+    this.pretender.changeScore(5);
+    
+    this.parent.checkWord(word);
+	}
+  , setNote: function(data) {
+    if (this.popup) this.popup.setNote(data);
+  }
+});
+layers.playLayer = playLayer
 
 function gameLayer () {
-    // You must always call the super class constructor
     gameLayer.superclass.constructor.call(this)
 		
 		console.log('Start game layers');
-		this.position = new geo.Point(WIDTH,120)
-		this.anchorPoint = new geo.Point(0,0)	
-		
-		//var bt_begin = new nodes.Sprite({ file:'/res/bt_begin.png'});
-		//this.addChild(bt_begin)
+		this.position = new geo.Point(WIDTH,0);
+		this.anchorPoint = new geo.Point(0,0);
 		
 		var item = new nodes.MenuItemImage({
 				normalImage: '/res/bt_begin.png'
 			, selectedImage: '/res/bt_begin.png'
-      , callback: function () {events.trigger(this, 'begin_game')}.bind(this)			
+      , callback: this.beginGame.bind(this)			
 		})
 		
-		var menu = new nodes.Menu({items: [item,]})
+		var menu = new nodes.Menu({items: [item]})
 
 		menu.anchorPoint	= new geo.Point(0,0)
     menu.position			= new geo.Point(0,0)
 		item.anchorPoint	= new geo.Point(0,0)
     item.position			= new geo.Point(0,75)
 
-    this.addChild({child: menu , z: 1})
+    this.addChild({child: menu , z: 10})
 
-    this.menu = menu;
-		
-		var move = new actions.MoveTo({duration: 0.95, position: new geo.Point(160, 120)})
-			move = new actions.EaseBounceOut({action: move.copy()})
-			
-		this.runAction(move);
     //events.addListener(this, 'begin_game',    this.beginGame.bind(this))
 		
 }
-layers.gameLayer = gameLayer
 
 gameLayer.inherit(Layer, {
-	beginGame: function() {
-		console.log('begin game');
-		
-		this.removeChild(this.menu)
-	}
-})
-
-function playLayer (data) {
-    // You must always call the super class constructor
-    playLayer.superclass.constructor.call(this)
-		this.position = new geo.Point(WIDTH,120)
-		this.anchorPoint = new geo.Point(0,0)	
-		
-		this.data = data;
-		WORD = this.data.test;
-		this.words = new wordLayer(WORD);
-		this.addChild(this.words);
-		
-		var move = new actions.MoveTo({duration: 0.95, position: new geo.Point(160, 120)})
+  onEnter: function() {
+    gameLayer.superclass.onEnter.call(this)
+ 
+		var move = new actions.MoveTo({duration: 0.95, position: new geo.Point(0, 0)})
 			move = new actions.EaseBounceOut({action: move.copy()})
 			
 		this.runAction(move);
-}
-playLayer.inherit(Layer, {
-	pressChoice: function(idx) {
-		console.log("pressed:", idx);
-		idx.setLetter('')
-	}
-})
-layers.playLayer = playLayer
-
+  }
+  , beginGame: function() {
+    this.parent.beginGame();
+  }
+});
 
 function letterLayer(letter, pos, i, callback) {
 	// You must always call the super class constructor
@@ -379,19 +542,23 @@ letterLayer.inherit(Layer, {
   }
   , flyTo: function(location) {
     this.isfly = true;
-    var action = new actions.Sequence({ actions: [ 
-          new actions.MoveTo({ duration: 0.2, position: ccp(location.x + this.delta.x, location.y + this.delta.y) })
-        , new actions.CallFunc({ target: this, method: 'endFly' })    
+    var action = new actions.Sequence({actions: [ 
+          new actions.MoveTo({duration: 0.2, position: ccp(location.x + this.delta.x, location.y + this.delta.y)})
+        , new actions.CallFunc({target: this, method: 'endFly'})    
     ]});
   
     this.runAction(action);
   }
 
 })
-function wordLayer(word) {
+function wordLayer(data) {
 	// You must always call the super class constructor
 	wordLayer.superclass.constructor.call(this)
-	this.anchorPoint = new geo.Point(0,0)	
+	this.anchorPoint = ccp(0,0);
+
+  this.data = data;
+
+  var word = data.word;
 
 	var pos = ccp(0,0);
   var sp;
@@ -407,7 +574,6 @@ function wordLayer(word) {
 		this.addChild({child:sp, z: -10});
     this.pos1[i] = this.getRect(sp);
     this.pos1[i].letter = null;
-    //console.log(this.pos1[i])
     
 //Seccond line    
 		sp = new nodes.Sprite({file:'/res/b_back.png'});
@@ -418,7 +584,7 @@ function wordLayer(word) {
     this.pos2[i].letter = sp;
 
 //Letter
-		var t = new letterLayer(word.charAt(i),new geo.Point(pos.x, 80 + 50),i);
+		var t = new letterLayer(word.charAt(i),ccp(pos.x, 80 + 50),i);
 		this.letters[i] = t;
 		this.addChild({child:t, z: 0});
 
@@ -426,19 +592,13 @@ function wordLayer(word) {
 		pos.x += 58;
 	}		
   // Create label
-  this.info = new Label({string:   "INFO"
-                        , fontName: 'Arial'
-                        , fontSize: 30
-                        , fontColor: '#000'
-                        })
-
+  this.info = new Label({string:   "INFO", fontName: 'Arial', fontSize: 30, fontColor: '#000'});
     this.info.anchorPoint = new geo.Point(0,0);
     this.info.position = new geo.Point(0,0);
-    this.addChild(this.info)
+    //this.addChild(this.info)
 
 
   if (Director.isTouchScreen) {
-      //this.isTouchEnabled = true
       
       var canvas = Director.canvas;
       
@@ -453,9 +613,16 @@ function wordLayer(word) {
       this.isMouseEnabled = true
   }
 	
+  this.position    = ccp(WIDTH,0);
+  var move = new actions.MoveTo({duration: 0.95, position: ccp(0, 0)})
+    move = new actions.EaseBounceOut({action: move})
+
+  this.runAction(move);
+  
 }
 wordLayer.inherit(Layer, {
-  _isdragging: false
+  _isdragging: false,
+  _disabled: false
   
   , registerWithTouchDispatcher11: function () {
     var TouchDispatcher = require('cocos2d/TouchDispatcher').TouchDispatcher;
@@ -487,7 +654,6 @@ wordLayer.inherit(Layer, {
       this._isdragging = true;
       this.tm = null;
       this.info.string = "Starting dragg..."
-      //console.log("Starting dragg...")
       if (Director.isTouchScreen) {
         Director.window.navigator.notification.vibrate(70);
       }
@@ -499,16 +665,23 @@ wordLayer.inherit(Layer, {
         word = word + this.pos1[j].letter.letter;
       }
       this.info.string = word;
-      events.trigger(this.parent, 'check_word', WORD);
+      var test = MD5(word);
+      
+      if (this.data.hash == test) {
+        this._disabled = true;
+        this.parent.createVictory(word);
+      }
   }
  //Global events 
   , eventDown: function(location) {
+      if (this._disabled) return;
       this._selected = this.getSelected(location);
       if (!this._selected) return;
       //console.log("Select item:",this._selected);
       if (this._selected.down) this.tm = setTimeout(this.startDrag.bind(this), 300)
   }
   , eventUp: function() {
+      if (this._disabled) return;
       if (this.tm) clearTimeout(this.tm);
       this.tm = null;
       if (!this._selected) return;
@@ -566,9 +739,10 @@ wordLayer.inherit(Layer, {
       this._isdragging = false;
       this._selected = null;
       
-      setTimeout(this.endFly.bind(this), 200)
+      this.endFly();
   }
   , eventDrag: function(location) {
+    if (this._disabled) return;
     if (!this._isdragging || !this._selected) return;
     var local	= this.convertToNodeSpace(location)
     local.x -= 20;
@@ -626,7 +800,154 @@ wordLayer.inherit(Layer, {
   }
   
 });
+function popupLayer(data) {
+	// You must always call the super class constructor
+	popupLayer.superclass.constructor.call(this);
+  
+  var back = new nodes.Sprite({file:'/res/popup.png'});
+    back.anchorPoint = ccp(0,0);
+    this.addChild(back);
 
+  var file;
+  if (data.victory) file = '/res/sm_good.png'; else file = '/res/sm_bad.png';
+  this.star = new nodes.Sprite({file:file});
+    this.star.position = ccp(100,100)
+    this.addChild(this.star);
+
+  this.anchorPoint = ccp(0,0);
+  this.position = ccp(WIDTH,120);
+
+
+	this.word = new Label({string:   data.word
+												, fontName: 'Arial'
+												, fontSize: 45
+												, fontColor: '#000'
+												})
+
+		this.word.anchorPoint = ccp(0,0);
+    this.word.position = ccp(180,10);
+    this.addChild(this.word)
+    
+    this.wait = new nodes.Sprite({file:'/res/wait1.png'});
+      this.wait.position = ccp(700,100);
+      this.wait.runAction(new actions.RepeatForever(new actions.RotateBy({duration: 1.5, angle: 360})));
+      this.addChild(this.wait);
+    
+    this.notes = new Array();
+
+		var item = new nodes.MenuItemImage({
+				normalImage: '/res/bt_next.png'
+			, selectedImage: '/res/bt_next.png'
+      , callback: this.nextGame.bind(this)			
+		})
+		
+		this.menu = new nodes.Menu({items: [item,]})
+
+		this.menu.anchorPoint	= ccp(0,0)
+    this.menu.position		= ccp(610,145)
+		item.anchorPoint      = ccp(0,0)
+    item.position         = ccp(0,0)
+
+    this.addChild({child: this.menu , z: 100})
+    
+    this.menu.visible = false;
+  
+}
+popupLayer.inherit(Layer, {
+  onEnter: function () {
+    popupLayer.superclass.onEnter.call(this)
+    
+    var move = new actions.MoveTo({duration: 1, position: ccp(-100, 120)})
+      move = new actions.EaseBounceOut({action: move.copy()})
+
+    var rot = new actions.RotateBy({duration:1, angle:360});
+    this.star.runAction(rot);
+    this.runAction(move);
+
+
+  }
+  , setNote: function(data) {
+    for (var i = 0; i < this.notes.length; i++) this.removeChild(this.notes[i]);
+  	var testlabel = new Label({string:   "", fontName: 'Arial', fontSize: 30, fontColor: '#000'});
+    function getWidth(txt) {
+        var ctx = Director.context;
+        var prevFont = ctx.font;
+        var tw = 0;
+        ctx.font = testlabel.font;
+        if (ctx.measureText) {
+            var txtSize = ctx.measureText(txt)
+            tw = txtSize.width
+        } else if (ctx.mozMeasureText) {
+            tw = ctx.mozMeasureText(txt)
+        }
+
+        ctx.font = prevFont
+      
+      return tw;
+    }
+    
+    
+    if (data.word) this.word.string = data.word;
+    var note = data.note;
+    if (!note) {
+      this.menu.visible = true;
+      this.wait.visible = false;
+      return;
+    }
+    
+    var words = note.split(" ");
+    var line = "";
+    
+    var label;
+    var y = 60;
+    var maxWidth = 450;
+    var lineHeight = 30;
+    var x = 380;
+
+    for(var n = 0; n < words.length; n++) {
+    
+      var testLine = line + words[n] + " ";
+      var testWidth = getWidth(testLine);
+      if(testWidth > maxWidth) { //Create new label
+        label = new Label({string:   line, fontName: 'Arial', fontSize: 30, fontColor: '#000'});
+          label.anchorPoint = ccp(0.5,0);
+          label.position = ccp(x,y)
+        this.addChild(label);
+        this.notes.push(label);
+        
+        line = words[n] + " ";
+        y += lineHeight;
+      } else {
+        line = testLine;
+      }
+    }
+    
+    label = new Label({string:   line, fontName: 'Arial', fontSize: 30, fontColor: '#000'});
+      label.anchorPoint = ccp(0.5,0);
+      label.position = ccp(x,y)
+    this.addChild(label);
+    this.notes.push(label);
+    
+    this.menu.visible = true;
+    this.wait.visible = false;
+  }
+  , nextGame: function() {
+    console.log("next game")
+    var move = new actions.MoveTo({duration: 1, position: ccp(WIDTH, 120)})
+      move = new actions.EaseBackIn({action: move})
+      
+      move = new actions.Sequence({actions:[
+              move, 
+              new actions.CallFunc({target: this, method: 'callback'})
+      ]})
+      
+    this.runAction(move);
+  }
+  , callback: function() {
+    this.parent.endWord();
+  }
+  
+});
 
 module.exports = layers
 
@@ -841,16 +1162,23 @@ var MD5 = function (string) {
 
 	return temp.toLowerCase();
 }
+
+module.exports = MD5;
 }, mimetype: "application/javascript", remote: false}; // END: /md5.js
 
 
 __jah__.resources["/res/bjuceklis.png"] = {data: __jah__.assetURL + "/res/bjuceklis.png", mimetype: "image/png", remote: true};
 __jah__.resources["/res/bt_begin.png"] = {data: __jah__.assetURL + "/res/bt_begin.png", mimetype: "image/png", remote: true};
 __jah__.resources["/res/bt_next.png"] = {data: __jah__.assetURL + "/res/bt_next.png", mimetype: "image/png", remote: true};
+__jah__.resources["/res/bulta.png"] = {data: __jah__.assetURL + "/res/bulta.png", mimetype: "image/png", remote: true};
 __jah__.resources["/res/b_back.png"] = {data: __jah__.assetURL + "/res/b_back.png", mimetype: "image/png", remote: true};
 __jah__.resources["/res/b_fons.png"] = {data: __jah__.assetURL + "/res/b_fons.png", mimetype: "image/png", remote: true};
+__jah__.resources["/res/clock.png"] = {data: __jah__.assetURL + "/res/clock.png", mimetype: "image/png", remote: true};
 __jah__.resources["/res/popup.png"] = {data: __jah__.assetURL + "/res/popup.png", mimetype: "image/png", remote: true};
+__jah__.resources["/res/pretender.png"] = {data: __jah__.assetURL + "/res/pretender.png", mimetype: "image/png", remote: true};
 __jah__.resources["/res/sm_bad.png"] = {data: __jah__.assetURL + "/res/sm_bad.png", mimetype: "image/png", remote: true};
 __jah__.resources["/res/sm_good.png"] = {data: __jah__.assetURL + "/res/sm_good.png", mimetype: "image/png", remote: true};
 __jah__.resources["/res/timer.png"] = {data: __jah__.assetURL + "/res/timer.png", mimetype: "image/png", remote: true};
+__jah__.resources["/res/wait.png"] = {data: __jah__.assetURL + "/res/wait.png", mimetype: "image/png", remote: true};
+__jah__.resources["/res/wait1.png"] = {data: __jah__.assetURL + "/res/wait1.png", mimetype: "image/png", remote: true};
 })();

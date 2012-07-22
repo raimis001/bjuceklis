@@ -27395,7 +27395,6 @@ Menu.inherit(Layer, /** @lends cocos.nodes.Menu# */ {
     // Mouse Events
     itemForMouseEvent: function (event) {
         var location = event.locationInCanvas
-
         var children = this.children
         for (var i = 0, len = children.length; i < len; i++) {
             var item = children[i]
@@ -30441,7 +30440,7 @@ Scheduler.inherit(Object, /** @lends cocos.Scheduler# */ {
 
         var target = opts.target,
             method = (typeof opts.method == 'function') ? opts.method : target[opts.method]
-
+          
         var element = this.hashForMethods[opts.target.id]
         if (element) {
             for (var i=0; i<element.timers.length; i++) {
@@ -30451,6 +30450,9 @@ Scheduler.inherit(Object, /** @lends cocos.Scheduler# */ {
                     timer = null
                 }
             }
+        } else {
+            console.log("element NOT found")
+          
         }
     },
 
@@ -30482,13 +30484,15 @@ Scheduler.inherit(Object, /** @lends cocos.Scheduler# */ {
      * You should NEVER call this method, unless you know what you are doing.
      */
     unscheduleAllSelectors: function () {
-        var i, x, entry
+        var i, x, entry, len
 
         // Custom selectors
         for (x in this.hashForMethods) {
             if (this.hashForMethods.hasOwnProperty(x)) {
                 entry = this.hashForMethods[x]
-                this.unscheduleAllSelectorsForTarget(entry.target)
+                if (entry) {
+                  this.unscheduleAllSelectorsForTarget(entry.target)
+                }
             }
         }
         // Updates selectors
